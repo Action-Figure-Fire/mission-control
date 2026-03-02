@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission Control 🦉</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .subtitle {
+    color: #7d8590;
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: #58a6ff; }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .channel-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .channel-name.has-icon::before { content: none; }
+  .channel-name::before {
+    content: '#';
+    color: #7d8590;
+    margin-right: 2px;
+  }
+  .progress-badge {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .progress-done { background: #238636; color: #fff; }
+  .progress-active { background: #1f6feb; color: #fff; }
+  .progress-empty { background: #30363d; color: #7d8590; }
+  .progress-bar-container {
+    height: 4px;
+    background: #30363d;
+    border-radius: 2px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #238636, #2ea043);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+  .task-list { list-style: none; margin-bottom: 12px; }
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #21262d;
+    font-size: 14px;
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #30363d;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: transparent;
+    color: transparent;
+    font-size: 11px;
+  }
+  .task-check:hover {
+    border-color: #238636;
+    background: rgba(35, 134, 54, 0.15);
+    color: #238636;
+  }
+  .task-text { flex: 1; }
+  .add-task-row {
+    display: flex;
+    gap: 8px;
+  }
+  .add-task-input {
+    flex: 1;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #e6edf3;
+    font-size: 14px;
+    outline: none;
+  }
+  .add-task-input:focus { border-color: #58a6ff; }
+  .add-task-input::placeholder { color: #484f58; }
+  .btn-add {
+    background: #238636;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-add:hover { background: #2ea043; }
+  .empty-state {
+    color: #484f58;
+    font-size: 13px;
+    font-style: italic;
+    padding: 8px 0;
+  }
+  .stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .stat-box {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 16px 24px;
+    text-align: center;
+    flex: 1;
+    min-width: 80px;
+  }
+  .stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: #7d8590;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+  .completing {
+    animation: fadeOut 0.4s ease forwards;
+  }
+  @keyframes fadeOut {
+    to { opacity: 0; height: 0; padding: 0; overflow: hidden; border: none; }
+  }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    body { padding: 16px; }
+    h1 { font-size: 22px; }
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    .stat-number { font-size: 24px; }
+    .stat-box { padding: 12px 16px; }
+    .card { padding: 16px; }
+    .channel-name { font-size: 16px; }
+    .task-check {
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+    }
+    .add-task-input {
+      font-size: 16px; /* prevents iOS zoom on focus */
+      padding: 10px 12px;
+    }
+    .btn-add {
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>🦉 Mission Control</h1>
+<p class="subtitle">Zach's command center — managed by Olga</p>
+
+<div class="stats" id="stats"></div>
+<div class="grid" id="grid"></div>
+
+<script>
+const CHANNELS = [
+  { id: "todo", name: "to-do", icon: "📋" },
+  { id: "1475534033931997368", name: "general" },
+  { id: "1475841895606255707", name: "health" },
+  { id: "1475865912350605457", name: "optimus🤖" },
+  { id: "1476280319219990781", name: "mitch-and-the-sandbridge" },
+  { id: "1476322307084386385", name: "blackbeard🏴‍☠️" }
+];
+
+// Seed default tasks for To-Do if not already set
+(function seedDefaults() {
+  const data = JSON.parse(localStorage.getItem("olga_mission_control") || "{}");
+  if (!data["todo"] || data["todo"].length === 0) {
+    data["todo"] = [
+      { text: "Contact Jarad", created: Date.now() },
+      { text: "Contact notebook guy from 165 email", created: Date.now() },
+      { text: "Contact Acura", created: Date.now() }
+    ];
+    localStorage.setItem("olga_mission_control", JSON.stringify(data));
+  }
+})();
+
+const STORAGE_KEY = "olga_mission_control";
+
+function loadTasks() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch { return {}; }
+}
+
+function saveTasks(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getChannelTasks(channelId) {
+  const data = loadTasks();
+  return data[channelId] || [];
+}
+
+function addTask(channelId, text) {
+  const data = loadTasks();
+  if (!data[channelId]) data[channelId] = [];
+  data[channelId].push({ text, created: Date.now() });
+  saveTasks(data);
+  render();
+}
+
+function completeTask(channelId, index) {
+  const el = document.querySelector(`[data-channel="${channelId}"] .task-item:nth-child(${index + 1})`);
+  if (el) {
+    el.classList.add('completing');
+    setTimeout(() => {
+      const data = loadTasks();
+      if (data[channelId]) {
+        data[channelId].splice(index, 1);
+        saveTasks(data);
+      }
+      render();
+    }, 400);
+  }
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  const statsEl = document.getElementById('stats');
+  const allTasks = loadTasks();
+
+  let totalTasks = 0;
+  let channelsWithTasks = 0;
+
+  CHANNELS.forEach(ch => {
+    const t = allTasks[ch.id] || [];
+    totalTasks += t.length;
+    if (t.length > 0) channelsWithTasks++;
+  });
+
+  statsEl.innerHTML = `
+    <div class="stat-box">
+      <div class="stat-number">${CHANNELS.length}</div>
+      <div class="stat-label">Channels</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number">${totalTasks}</div>
+      <div class="stat-label">Open Tasks</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number">${channelsWithTasks}</div>
+      <div class="stat-label">Active</div>
+    </div>
+  `;
+
+  grid.innerHTML = CHANNELS.map(ch => {
+    const tasks = allTasks[ch.id] || [];
+    const badgeClass = tasks.length === 0 ? 'progress-empty' : 'progress-active';
+    const badgeText = tasks.length === 0 ? 'Clear' : `${tasks.length} task${tasks.length > 1 ? 's' : ''}`;
+
+    const taskItems = tasks.length > 0
+      ? tasks.map((t, i) => `
+          <li class="task-item">
+            <button class="task-check" onclick="completeTask('${ch.id}', ${i})" title="Complete">✓</button>
+            <span class="task-text">${escapeHtml(t.text)}</span>
+          </li>`).join('')
+      : '<li class="empty-state">No tasks — looking good ✨</li>';
+
+    return `
+      <div class="card" data-channel="${ch.id}">
+        <div class="card-header">
+          <span class="channel-name${ch.icon ? ' has-icon' : ''}">${ch.icon ? ch.icon + ' ' : ''}${escapeHtml(ch.name)}</span>
+          <span class="progress-badge ${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" style="width: ${tasks.length === 0 ? 100 : 0}%"></div>
+        </div>
+        <ul class="task-list">${taskItems}</ul>
+        <div class="add-task-row">
+          <input class="add-task-input" placeholder="Add a task..." onkeydown="if(event.key==='Enter'){addTask('${ch.id}', this.value); this.value='';}" />
+          <button class="btn-add" onclick="const inp=this.previousElementSibling; addTask('${ch.id}', inp.value); inp.value='';">+ Add</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+render();
+</script>
+</body>
+</html>
